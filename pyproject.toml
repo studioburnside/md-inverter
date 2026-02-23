@@ -1,0 +1,12 @@
+[project]
+name = "md-inverter"
+version = "2.0.0"
+description = "Convert Markdown to RTF or plaintext — locally, interactively, no cloud required."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "mistune>=3.2.0",
+]
+
+[project.scripts]
+mdinvert = "md_inverter:main"

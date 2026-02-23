@@ -1,0 +1,42 @@
+# Python-generated files
+*.py[oc]
+wheels/
+*.egg-info
+
+# Virtual environment
+.venv/
+
+# Python build artifacts — never commit these
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# uv / pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test / output artifacts (project-specific)
+output.rtf
+output.txt
+test-inverted.rtf
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Environment variables / secrets
+.env
+.env.*
