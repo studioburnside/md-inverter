@@ -42,4 +42,4 @@ extension/crx/
 
 # Environment variables / secrets
 .env
-.env.*
+.env.*output-inverted.*
