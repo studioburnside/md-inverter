@@ -1,11 +1,3 @@
-# Python-generated files
-*.py[oc]
-wheels/
-*.egg-info
-
-# Virtual environment
-.venv/
-
 # Python build artifacts — never commit these
 *.egg-info/
 dist/
@@ -28,6 +20,17 @@ pip-delete-this-directory.txt
 output.rtf
 output.txt
 test-inverted.rtf
+
+# Web build artifacts
+web/.next/
+web/node_modules/
+web/out/
+web/.env.local
+web/.env
+
+# Extension build artifacts
+extension/*.zip
+extension/crx/
 
 # macOS
 .DS_Store

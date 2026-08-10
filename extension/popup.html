@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>.MDinverter</title>
+  <style>
+    :root {
+      --bs-bg: #17090e;
+      --bs-surface: #221219;
+      --bs-burgundy: #a63a50;
+      --bs-gold: #d4af37;
+      --bs-gold-champagne: #e8c875;
+      --bs-creme: #f2e8d5;
+      --bs-bronze: #b08d57;
+      --bs-emerald: #50c878;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 320px;
+      min-height: 200px;
+      background: var(--bs-bg);
+      color: var(--bs-creme);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 12px;
+    }
+    h1 { font-size: 14px; font-weight: 600; color: var(--bs-gold-champagne); margin-bottom: 10px; }
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: var(--bs-surface);
+      border: 1px solid var(--bs-burgundy);
+      border-radius: 6px;
+      color: var(--bs-creme);
+      font-family: monospace;
+      font-size: 12px;
+      padding: 8px;
+      resize: vertical;
+      margin-bottom: 10px;
+    }
+    textarea:focus { outline: none; border-color: var(--bs-gold); }
+    .btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    button {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.9; }
+    .btn-rtf { background: var(--bs-gold); color: var(--bs-bg); }
+    .btn-text { background: var(--bs-bronze); color: var(--bs-bg); }
+    .btn-both { background: var(--bs-emerald); color: var(--bs-bg); }
+    .note { font-size: 10px; color: var(--bs-bronze); margin-top: 8px; text-align: center; }
+    .premium { font-size: 10px; color: var(--bs-bronze); margin-top: 6px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>.MDinverter</h1>
+  <textarea id="md-input" placeholder="Paste Markdown here..."></textarea>
+  <div class="btn-row">
+    <button class="btn-rtf" onclick="convert('rtf')">Copy RTF</button>
+    <button class="btn-text" onclick="convert('text')">Copy Text</button>
+    <button class="btn-both" onclick="convert('both')">Copy Both</button>
+  </div>
+  <div class="note">Right-click any Markdown text on any page → "Convert with .MDinverter"</div>
+  <div class="premium">Free tier • $9 premium unlocks bulk mode</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
