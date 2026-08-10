@@ -13,7 +13,19 @@ Convert Markdown to rich-text (RTF) in the browser — no install, no cloud uplo
 
 ### Pareto focus (1 job, done obsessively well)
 
-| Feature | Effort | Impact | Priority |
+The core value prop: **Markdown → RTF conversion that preserves rich formatting** (bold, italic, headings, lists, code blocks, blockquotes, strikethrough, links, images). This is the 20% of features that covers 80% of use cases — writers pasting into Pages, academics formatting papers, content creators moving Markdown to rich-text editors.
+
+### Tier structure
+
+| Tier | Daily Pro | Monthly Pro | Features | Price |
+|---|---|---|---|---|
+| Free | 1 | 20 | Markdown→RTF, plaintext always free, download | $0 |
+| Premium | Unlimited | Unlimited | Bulk conversion, custom filenames, RTF clipboard copy | $9 one-time |
+
+**Pro features** (consume quota): RTF download, RTF clipboard copy
+**Free features**: Plaintext conversion/download/copy always free
+
+Quota tracking: localStorage (`mdinvert_daily_YYYY-MM-DD`, `mdinvert_monthly_YYYY-MM`). No server, no accounts.
 |---|---|---|---|
 | Two-panel Markdown→RTF converter | Medium | High | **P0** |
 | Browser extension context menu | Low | High | **P0** |
