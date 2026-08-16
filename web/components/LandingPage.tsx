@@ -22,19 +22,6 @@ const features = [
   }
 ];
 
-const testimonials = [
-  {
-    name: "Alex Chen",
-    role: "Technical Writer",
-    quote: "Finally a Markdown-to-RTF tool that preserves all formatting and works offline. The browser extension is a game-changer."
-  },
-  {
-    name: "Sarah Martinez",
-    role: "Academic Researcher",
-    quote: "I use this daily to convert my research notes into properly formatted documents for my students."
-  }
-];
-
 const faqs = [
   {
     question: "Is my data safe?",
@@ -201,31 +188,6 @@ export default function LandingPage() {
               </button>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-16 bg-[var(--bs-surface)]">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-[var(--bs-creme)] mb-12">
-            What users say
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {testimonials.map((t, i) => (
-              <div key={i} className="bg-[var(--bs-bg)] border border-[var(--bs-burgundy)] rounded-xl p-6">
-                <p className="text-[var(--bs-creme)] mb-4">"{{t.quote}}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[var(--bs-burgundy)] rounded-full flex items-center justify-center text-xs font-bold">
-                    {t.name.split(" ").map((n: string) => n[0]).join("")}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-[var(--bs-creme)]">{t.name}</div>
-                    <div className="text-sm text-[var(--bs-bronze)]">{t.role}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
