@@ -299,3 +299,47 @@ This HQ spec is **complete** when Zette can:
 4. Deploy to burnsidecloud-mach1 following Section 4 (Deployment Guide)
 
 **Acceptance test**: A visitor can go to `md-inverter.com`, paste Markdown, click "Download RTF", and get a valid .rtf file that opens correctly in Pages/Word.
+
+---
+
+## Product mechanics v2 (operator-directed, 2026-08-16; implemented same day)
+
+### The copy license (replaces the one-shot quota)
+A free pro conversion licenses the EXACT input text (byte-identical). While the
+editor matches the licensed snapshot (`localStorage: mdinvert_licensed_input`),
+Copy/Download of that conversion stay free and repeatable. Any edit breaks the
+match; over-budget free users then see a word-level amber diff highlighting
+exactly which edits block re-copying, plus a one-click "Revert my edits". The
+old behavior (quota consumed → copy dead even for the same text) is gone.
+
+### Output lock (free tier)
+The output pane is not selectable/copyable for free users (select suppressed,
+copy/cut/contextmenu blocked) — the Copy button is the only door. Premium
+removes the lock. Input editor stays fully editable on all tiers (paste-in is
+the product's front door; interpreted from the operator's brief accordingly).
+
+### Branded upsell modal
+Browser alert()s replaced with an in-product modal (kicker, headline per
+scenario: fresh quota / edited-input / bulk; perks list; Go Premium; Revert
+escape hatch where applicable). This is the conversion moment — keep it
+beautiful.
+
+### Rendered preview
+The paper pane defaults to a formatted PREVIEW of the output (what it'll look
+like in Pages/Word), with a `source` tab for raw RTF. The preview renderer
+(`web/lib/markdown-preview.tsx`) is PRESENTATION ONLY — it is not a fourth
+conversion engine; the three real engines remain the sync set.
+
+### Referral program (SPEC — needs backend + launch; not yet implemented)
+- Refer 3 people → 1 week of Premium. Counts only when all 3 have each done
+  ≥1 pro conversion (free-tier pro conversions count).
+- Each referral who converts to the $9 lifetime → 1 month of Premium.
+- Requires: referral codes + attribution + conversion events (Stripe webhook
+  for lifetime purchases) → a small backend (the mach1 stdlib+SQLite pattern
+  is the fit) + the public domain. Blocked until launch decisions land.
+- FAQ on the landing already teases it as "at launch".
+
+### Accounts (LOW priority, operator note 2026-08-16)
+Optional accounts may serve pro users later: local ENCRYPTED history (opt-in),
+iOS/macOS Shortcuts integration, and a bookmark/contextual-menu presence.
+Nothing now; recorded so the direction isn't lost.

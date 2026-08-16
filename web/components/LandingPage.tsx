@@ -191,6 +191,33 @@ export default function LandingPage() {
           </div>
         </header>
 
+        {/* ============ THE PROBLEM ============ */}
+        <section className="section" id="problem">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <p className="kicker">the problem</p>
+              <h2>You've pasted Markdown into Word before.</h2>
+              <p>The asterisks came too.</p>
+            </div>
+            <div className="shame reveal">
+              <div className="doc">
+                <div className="pane-bar"><span className="pane-dots"><i /><i /><i /></span> Untitled.docx</div>
+                <div className="body">
+                  <p><span className="squig">#</span> Q3 update</p>
+                  <p>Revenue is up <span className="squig">**</span>forty percent<span className="squig">**</span> and churn is <span className="squig">*</span>finally<span className="squig">*</span> flat.</p>
+                  <p><span className="squig">-</span> Ship the new pricing page</p>
+                  <p><span className="squig">-</span> Close the Henderson deal</p>
+                  <p><span className="squig">&gt;</span> <span className="squig">`</span>deadline<span className="squig">`</span> is Friday.</p>
+                </div>
+              </div>
+              <p className="cap">Every marker you typed, <b>published</b>. Your reader saw the plumbing.</p>
+              <p className="fixline"><a className="btn btn-blue" href="#converter">Never again ↓</a></p>
+            </div>
+          </div>
+        </section>
+
+        <div className="rule" aria-hidden="true" />
+
         {/* ============ CONVERTER ============ */}
         <section className="section" id="converter">
           <div className="wrap">
@@ -301,7 +328,15 @@ export default function LandingPage() {
               </details>
               <details>
                 <summary>What exactly does $9 buy?</summary>
-                <p>Unlimited RTF conversions, bulk mode, custom filenames, and rich-text clipboard copy — for life. It's a tool, so it's priced like one: once.</p>
+                <p>Unlimited RTF conversions, bulk mode, custom filenames, rich-text clipboard copy, and freely selectable output — for life. It's a tool, so it's priced like one: once.</p>
+              </details>
+              <details>
+                <summary>Why can't I select text in the output?</summary>
+                <p>On the free tier the Copy button is the only door — it's what makes the free conversion count. The upside: once you've converted something, that exact text is yours to re-copy and re-download as often as you like. Edit it, and the editor highlights precisely what changed so you can revert. Premium removes the lock entirely.</p>
+              </details>
+              <details>
+                <summary>Is there a referral program?</summary>
+                <p>At launch: refer three friends who each make a conversion and take a week of Premium on us — and if someone you referred goes lifetime, you get a month. Codes arrive with the public release.</p>
               </details>
             </div>
           </div>

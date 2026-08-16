@@ -51,6 +51,10 @@ isolation). Three copies exist:
 
 When modifying conversion behavior, update all three.
 
+**NOT part of the sync set:** `web/lib/markdown-preview.tsx` renders a visual
+preview for the paper pane only. If conversion behavior changes visibly,
+update it for looks — but it never defines output bytes.
+
 ## House Style
 
 The project uses the Studio Burnside palette (see FLEET.md HOUSE-STYLE.md):
