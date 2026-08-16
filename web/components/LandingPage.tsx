@@ -1,257 +1,319 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Converter from "@/components/Converter";
 
-// Landing page content
-const features = [
+/* ============================================================
+   .MDinverter landing — Fable design pass, 2026-08-16.
+   The hero is the product: markdown types itself on the ink
+   pane, then the inversion sweeps it onto paper as rich text.
+   ============================================================ */
+
+type Seg = { cls: "tok" | "txt" | "dim"; s: string };
+
+const SNIPPETS: { src: Seg[]; rich: React.ReactNode[] }[] = [
   {
-    title: "Local Processing",
-    description: "All conversion happens in your browser. No servers, no cloud uploads, no data leaving your machine.",
-    icon: "🛡️"
+    src: [
+      { cls: "tok", s: "# " }, { cls: "txt", s: "The pitch\n\n" },
+      { cls: "txt", s: "Ship the " }, { cls: "tok", s: "**" }, { cls: "txt", s: "bold" }, { cls: "tok", s: "**" }, { cls: "txt", s: " version.\n\n" },
+      { cls: "tok", s: "- " }, { cls: "txt", s: "No cloud\n" },
+      { cls: "tok", s: "- " }, { cls: "txt", s: "No signup\n" },
+      { cls: "tok", s: "- " }, { cls: "txt", s: "Nothing leaves the machine\n\n" },
+      { cls: "tok", s: "> " }, { cls: "dim", s: "`.md`" }, { cls: "txt", s: " in — " }, { cls: "dim", s: "`.rtf`" }, { cls: "txt", s: " out." },
+    ],
+    rich: [
+      <h3 key="h">The pitch</h3>,
+      <p key="p">Ship the <b>bold</b> version.</p>,
+      <ul key="u"><li>No cloud</li><li>No signup</li><li>Nothing leaves the machine</li></ul>,
+      <blockquote key="q"><code>.md</code> in — <code>.rtf</code> out.</blockquote>,
+    ],
   },
   {
-    title: "Rich Formatting",
-    description: "Headings, bold, italic, code blocks, lists, blockquotes — everything converts to properly formatted RTF.",
-    icon: "🎨"
+    src: [
+      { cls: "tok", s: "## " }, { cls: "txt", s: "Meeting notes\n\n" },
+      { cls: "txt", s: "Decisions in " }, { cls: "tok", s: "*" }, { cls: "txt", s: "italics" }, { cls: "tok", s: "*" },
+      { cls: "txt", s: ", " }, { cls: "tok", s: "~~" }, { cls: "txt", s: "cut scope" }, { cls: "tok", s: "~~" }, { cls: "txt", s: " shipped.\n\n" },
+      { cls: "tok", s: "```python\n" }, { cls: "dim", s: 'print("hello, rich text")\n' }, { cls: "tok", s: "```" },
+    ],
+    rich: [
+      <h4 key="h">Meeting notes</h4>,
+      <p key="p">Decisions in <i>italics</i>, <span className="del">cut scope</span> shipped.</p>,
+      <div key="c" className="codeblock">{'print("hello, rich text")'}</div>,
+    ],
   },
-  {
-    title: "Browser Extension",
-    description: "Convert Markdown from any webpage instantly with a right-click using our browser extension.",
-    icon: "⚡"
-  }
 ];
 
-const faqs = [
-  {
-    question: "Is my data safe?",
-    answer: "Yes. All conversion happens locally in your browser. No data is sent to any server."
-  },
-  {
-    question: "Do I need to sign up?",
-    answer: "No signup required. Convert up to 1 document per day for free. Premium ($9 one-time) unlocks unlimited conversions."
-  },
-  {
-    question: "What file formats are supported?",
-    answer: "Convert Markdown to RTF (.rtf) or plain text (.txt). RTF files work with Pages, Word, Google Docs, and TextEdit."
-  }
-];
+function useReveals() {
+  useEffect(() => {
+    const els = document.querySelectorAll(".reveal");
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!("IntersectionObserver" in window) || rm) {
+      els.forEach((el) => el.classList.add("is-in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((en) => {
+        if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
+      }),
+      { threshold: 0.15, rootMargin: "0px 0px -5% 0px" }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
 
-export default function LandingPage() {
-  const [showConverter, setShowConverter] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+function Diptych() {
+  const [snip, setSnip] = useState(0);
+  const [chars, setChars] = useState(0);
+  const [phase, setPhase] = useState<"typing" | "rich">("typing");
+  const rm = useRef(false);
+
+  const flat = useMemo(
+    () => SNIPPETS[snip].src.flatMap((seg) => [...seg.s].map((ch) => ({ ch, cls: seg.cls }))),
+    [snip]
+  );
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    rm.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (rm.current) { setChars(flat.length); setPhase("rich"); }
+  }, [flat.length]);
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  };
+  useEffect(() => {
+    if (rm.current) return;
+    if (phase === "typing") {
+      if (chars < flat.length) {
+        const t = setTimeout(() => setChars((c) => c + 1), 26);
+        return () => clearTimeout(t);
+      }
+      const t = setTimeout(() => setPhase("rich"), 350);
+      return () => clearTimeout(t);
+    }
+    // rich phase: hold, then advance
+    const t = setTimeout(() => {
+      setSnip((s) => (s + 1) % SNIPPETS.length);
+      setChars(0);
+      setPhase("typing");
+    }, 4600);
+    return () => clearTimeout(t);
+  }, [phase, chars, flat.length]);
+
+  // group visible chars back into spans
+  const spans: { cls: string; s: string }[] = [];
+  for (let i = 0; i < chars; i++) {
+    const { ch, cls } = flat[i];
+    const last = spans[spans.length - 1];
+    if (last && last.cls === cls) last.s += ch;
+    else spans.push({ cls, s: ch });
+  }
+
+  return (
+    <div className="diptych reveal" style={{ "--d": ".25s" } as React.CSSProperties}>
+      <div className="pane pane-ink">
+        <div className="pane-bar"><span className="pane-dots"><i /><i /><i /></span> notes.md</div>
+        <div className="pane-body">
+          <div className="md-src" aria-label="Markdown source being typed">
+            {spans.map((sp, i) => (
+              <span key={i} className={sp.cls === "txt" ? undefined : sp.cls}>{sp.s}</span>
+            ))}
+            {phase === "typing" && <span className="caret" aria-hidden="true" />}
+          </div>
+        </div>
+      </div>
+
+      <div className="seam-badge" aria-hidden="true">
+        <span className={"gl" + (phase === "rich" ? "" : "")}>{phase === "rich" ? "↦" : "·"}</span>
+      </div>
+
+      <div className={"pane pane-paper" + (phase === "rich" ? " sweep" : "")}>
+        <div className="pane-bar"><span className="pane-dots"><i /><i /><i /></span> notes.rtf</div>
+        <div className="pane-body">
+          <div className="rich" aria-label="The same content rendered as rich text">
+            {SNIPPETS[snip].rich.map((node, i) => (
+              <div
+                key={`${snip}-${i}`}
+                className={phase === "rich" ? "on" : undefined}
+                style={{ transitionDelay: `${0.15 + i * 0.14}s` }}
+              >
+                {node}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LandingPage() {
+  useReveals();
 
   return (
     <>
-      {/* Header */}
-      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled 
-          ? "bg-[var(--bs-surface)]/90 backdrop-blur border-b border-[var(--bs-burgundy)]" 
-          : "bg-transparent"
-      }`}>
-        <nav className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[var(--bs-gold)] rounded-lg flex items-center justify-center text-[var(--bs-bg)] font-bold text-sm">M</div>
-            <span className="text-xl font-semibold text-[var(--bs-gold-champagne)]">.MDinverter</span>
+      <nav className="mdi-nav" aria-label="Main">
+        <div className="wrap row">
+          <a className="mdi-mark" href="#top" style={{ fontSize: "1.15rem" }}>
+            <span className="md">.MD</span><span className="inv">inverter</span>
+          </a>
+          <div className="links">
+            <a href="#converter">Converter</a>
+            <a href="#why">Why</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
           </div>
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => scrollTo("features")}
-              className="text-sm text-[var(--bs-bronze)] hover:text-[var(--bs-creme)] transition-colors"
-            >
-              Features
-            </button>
-            <button 
-              onClick={() => scrollTo("pricing")}
-              className="text-sm text-[var(--bs-bronze)] hover:text-[var(--bs-creme)] transition-colors"
-            >
-              Pricing
-            </button>
-            <button 
-              onClick={() => scrollTo("faq")}
-              className="text-sm text-[var(--bs-bronze)] hover:text-[var(--bs-creme)] transition-colors"
-            >
-              FAQ
-            </button>
-            <button
-              onClick={() => setShowConverter(true)}
-              className="text-xs px-4 py-2 bg-[var(--bs-gold)] text-[var(--bs-bg)] font-medium rounded-lg hover:bg-[var(--bs-gold-champagne)] transition-colors"
-            >
-              Try Free
-            </button>
-          </div>
-        </nav>
-      </header>
+          <a className="btn btn-quill btn-sm" href="#pricing">Premium — $9</a>
+        </div>
+      </nav>
 
-      {/* Hero */}
-      <section className="min-h-screen flex items-center bg-[var(--bs-bg)] pt-16">
-        <div className="max-w-6xl mx-auto px-6 py-12">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-[var(--bs-creme)] mb-4 leading-tight">
-                Convert Markdown to RTF
-                <br />
-                <span className="text-[var(--bs-gold)]">In your browser. No cloud.</span>
+      <main id="top">
+        {/* ============ HERO ============ */}
+        <header className="hero">
+          <div className="wrap">
+            <div className="hero-head">
+              <p className="kicker reveal">$ mdinvert --both</p>
+              <h1 className="reveal" style={{ "--d": ".08s" } as React.CSSProperties}>
+                <span className="mono-side">Markdown in.</span>{" "}
+                <span className="serif-side">Rich text out.</span>
               </h1>
-              <p className="text-lg text-[var(--bs-bronze)] mb-6">
-                Paste Markdown and get formatted RTF ready for Pages, Word, or Google Docs. 
-                Runs 100% locally — your text never leaves your machine.
+              <p className="sub reveal" style={{ "--d": ".16s" } as React.CSSProperties}>
+                Headings, bold, lists, quotes, code — converted to flawless RTF for Pages,
+                Word, and Google Docs, <b>entirely in your browser</b>. No cloud. No signup.
+                Nothing leaves your machine.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={() => setShowConverter(true)}
-                  className="px-6 py-3 bg-[var(--bs-gold)] text-[var(--bs-bg)] font-medium rounded-lg hover:bg-[var(--bs-gold-champagne)] transition-colors flex items-center justify-center gap-2"
+              <div className="hero-ctas reveal" style={{ "--d": ".24s" } as React.CSSProperties}>
+                <a className="btn btn-blue" href="#converter">Invert something ↓</a>
+                <a className="btn btn-ghost" href="#pricing">See pricing</a>
+              </div>
+              <p className="hero-fine reveal" style={{ "--d": ".3s" } as React.CSSProperties}>
+                Free every day · $9 once for everything, forever
+              </p>
+            </div>
+            <Diptych />
+          </div>
+        </header>
+
+        {/* ============ CONVERTER ============ */}
+        <section className="section" id="converter">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <p className="kicker">the tool itself</p>
+              <h2>Paste. Invert. Paste anywhere.</h2>
+              <p>The full converter, right here — plaintext output is always free, and RTF comes out of the paper side.</p>
+            </div>
+            <div className="reveal"><Converter /></div>
+          </div>
+        </section>
+
+        <div className="rule" aria-hidden="true" />
+
+        {/* ============ WHY ============ */}
+        <section className="section" id="why">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <p className="kicker">why this one</p>
+              <h2>One job, done obsessively well.</h2>
+            </div>
+            <div className="cards3">
+              <div className="wcard reveal">
+                <span className="glyph">~/local</span>
+                <h3>Runs where your text is</h3>
+                <p>Every conversion happens <b>in the page you're looking at</b> — works offline, keeps drafts private, and the browser extension inverts any selected text with a right-click.</p>
+              </div>
+              <div className="wcard reveal" style={{ "--d": ".1s" } as React.CSSProperties}>
+                <span className="glyph">1:1</span>
+                <h3>Fidelity is the feature</h3>
+                <p>Six heading levels, nested lists, quotes, code blocks, strikethrough — each lands in RTF exactly. Em-dashes and smart quotes survive as themselves, <b>never as question marks</b>.</p>
+              </div>
+              <div className="wcard reveal" style={{ "--d": ".2s" } as React.CSSProperties}>
+                <span className="glyph">$9·∞</span>
+                <h3>Priced like a tool</h3>
+                <p>A real free tier every day, and one honest price for the rest: <b>$9, once</b>. No subscription, no account, no "contact sales".</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="rule" aria-hidden="true" />
+
+        {/* ============ PRICING ============ */}
+        <section className="section" id="pricing">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <p className="kicker">pricing</p>
+              <h2>Two tiers. Zero subscriptions.</h2>
+            </div>
+            <div className="pricing">
+              <div className="price-card price-ink reveal">
+                <h3>free — the daily driver</h3>
+                <p className="amount">$0</p>
+                <ul>
+                  <li>Unlimited plaintext conversion &amp; copy</li>
+                  <li>1 RTF pro conversion a day (20 a month)</li>
+                  <li>The browser extension</li>
+                  <li>Everything stays local</li>
+                </ul>
+              </div>
+              <div className="price-card price-paper reveal" style={{ "--d": ".12s" } as React.CSSProperties}>
+                <h3>Premium — the whole desk</h3>
+                <p className="amount">$9 <small>once, forever</small></p>
+                <ul>
+                  <li>Unlimited RTF conversions</li>
+                  <li>Bulk mode — many documents in one pass</li>
+                  <li>Custom filenames</li>
+                  <li>Rich-text straight to the clipboard</li>
+                </ul>
+                <a
+                  className="btn btn-quill"
+                  href="https://buy.stripe.com/test_4gobV9bRzduFb0I3UU"
+                  style={{ justifySelf: "start" }}
                 >
-                  Try It Free
-                </button>
-                <button
-                  onClick={() => scrollTo("features")}
-                  className="px-6 py-3 border border-[var(--bs-burgundy)] text-[var(--bs-creme)] font-medium rounded-lg hover:bg-[var(--bs-walnut)] transition-colors"
-                >
-                  Learn More
-                </button>
-              </div>
-              <div className="mt-4 flex items-center gap-4 text-sm text-[var(--bs-bronze)]">
-                <span>✓ No signup required</span>
-                <span>✓ 100% private</span>
-                <span>✓ Works offline</span>
-              </div>
-            </div>
-            <div className="bg-[var(--bs-surface)] border border-[var(--bs-burgundy)] rounded-xl p-6">
-              <div className="bg-[var(--bs-bg)] rounded-lg p-4 mb-4">
-                <pre className="text-xs text-[var(--bs-bronze)] overflow-x-auto whitespace-pre-wrap break-all">
-{`{\\rtf\\ansi\\ansicpg1252
-\\b Heading 1\\b0\\par
-\\i Italic text\\i0\\par
-• List item 1\\par
-• List item 2\\par
-}`}
-                </pre>
-              </div>
-              <div className="text-center text-sm text-[var(--bs-bronze)]">
-                Example RTF output — copy &amp; paste into any rich text editor
+                  Go Premium
+                </a>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Features */}
-      <section id="features" className="py-16 bg-[var(--bs-surface)]">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-[var(--bs-creme)] mb-12">
-            Everything you need
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, i) => (
-              <div key={i} className="text-center">
-                <div className="w-12 h-12 bg-[var(--bs-gold)]/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <span className="text-[var(--bs-gold)] font-bold">{feature.icon}</span>
-                </div>
-                <h3 className="text-xl font-semibold text-[var(--bs-creme)] mb-2">{feature.title}</h3>
-                <p className="text-[var(--bs-bronze)]">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        <div className="rule" aria-hidden="true" />
 
-      {/* Converter */}
-      <section className="py-16 bg-[var(--bs-bg)]">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-[var(--bs-creme)] mb-4">
-            Try it below
-          </h2>
-          <p className="text-center text-[var(--bs-bronze)] mb-8">
-            Paste your Markdown and convert to RTF or plaintext instantly
-          </p>
-          {showConverter && <Converter />}
-          {!showConverter && (
-            <div className="text-center py-12 border border-[var(--bs-burgundy)] rounded-xl bg-[var(--bs-surface)]">
-              <button
-                onClick={() => setShowConverter(true)}
-                className="px-6 py-3 bg-[var(--bs-gold)] text-[var(--bs-bg)] font-medium rounded-lg hover:bg-[var(--bs-gold-champagne)] transition-colors"
-              >
-                Show Converter
-              </button>
+        {/* ============ FAQ ============ */}
+        <section className="section" id="faq">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <p className="kicker">faq</p>
+              <h2>Fair questions.</h2>
             </div>
-          )}
-        </div>
-      </section>
+            <div className="faq reveal">
+              <details>
+                <summary>Is my text safe?</summary>
+                <p>Yes — conversion runs in your browser's own JavaScript. There is no server, no upload, no analytics. Disconnect from the internet after loading the page and it keeps working.</p>
+              </details>
+              <details>
+                <summary>Do I need an account?</summary>
+                <p>No. The free tier works without signing up for anything, and Premium is a one-time checkout — your license lives in your browser, not in a database of users.</p>
+              </details>
+              <details>
+                <summary>What formats come out?</summary>
+                <p>RTF (.rtf) — which opens with formatting intact in Pages, Word, TextEdit, and Google Docs — and clean plaintext (.txt) with every bit of Markdown syntax stripped.</p>
+              </details>
+              <details>
+                <summary>What does the extension do?</summary>
+                <p>Right-click any selected Markdown on any webpage and convert it in place — to rich text on your clipboard or plain text. Manifest V3, Chrome and Edge today; it makes no network calls at all.</p>
+              </details>
+              <details>
+                <summary>What exactly does $9 buy?</summary>
+                <p>Unlimited RTF conversions, bulk mode, custom filenames, and rich-text clipboard copy — for life. It's a tool, so it's priced like one: once.</p>
+              </details>
+            </div>
+          </div>
+        </section>
+      </main>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 bg-[var(--bs-bg)]">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-[var(--bs-creme)] mb-4">
-            Simple pricing
-          </h2>
-          <p className="text-[var(--bs-bronze)] mb-12">
-            Plaintext conversion is always free. Premium unlocks RTF downloads, bulk mode, and custom filenames.
-          </p>
-          <div className="max-w-md mx-auto bg-[var(--bs-surface)] border-2 border-[var(--bs-gold)] rounded-xl p-8">
-            <h3 className="text-2xl font-bold text-[var(--bs-creme)] mb-4">Premium</h3>
-            <div className="text-4xl font-bold text-[var(--bs-gold)] mb-6">$9<span className="text-lg text-[var(--bs-bronze)]">/one-time</span></div>
-            <ul className="text-left mb-6 space-y-3">
-              <li className="flex items-center gap-2 text-[var(--bs-creme)]">✓ Unlimited RTF conversions</li>
-              <li className="flex items-center gap-2 text-[var(--bs-creme)]">✓ Bulk conversion mode</li>
-              <li className="flex items-center gap-2 text-[var(--bs-creme)]">✓ Custom filenames</li>
-              <li className="flex items-center gap-2 text-[var(--bs-creme)]">✓ RTF clipboard copy</li>
-            </ul>
-            <button
-              onClick={() => {
-                window.location.href = "https://buy.stripe.com/test_4gobV9bRzduFb0I3UU";
-              }}
-              className="w-full px-6 py-3 bg-[var(--bs-emerald)] text-[var(--bs-bg)] font-medium rounded-lg hover:bg-[var(--bs-emerald-deep)] transition-colors"
-            >
-              Get Premium — $9
-            </button>
-            <p className="text-xs text-[var(--bs-bronze)] mt-4">
-              One-time payment. No subscription. Lifetime access.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="py-16 bg-[var(--bs-surface)]">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-[var(--bs-creme)] mb-12">
-            Frequently asked questions
-          </h2>
-          <div className="space-y-6">
-            {faqs.map((faq, i) => (
-              <div key={i} className="bg-[var(--bs-bg)] border border-[var(--bs-burgundy)] rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-[var(--bs-creme)] mb-2">{faq.question}</h3>
-                <p className="text-[var(--bs-bronze)]">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-[var(--bs-burgundy)] bg-[var(--bs-surface)] py-8">
-        <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-[var(--bs-gold)] rounded flex items-center justify-center text-[var(--bs-bg)] font-bold text-xs">M</div>
-            <span className="text-[var(--bs-creme)] font-semibold">.MDinverter</span>
-          </div>
-          <div className="text-sm text-[var(--bs-bronze)]">
-            Built by studioburnside · MIT licensed
-          </div>
-        </div>
+      <footer className="mdi-footer">
+        <p>
+          <a className="mdi-mark" href="#top"><span className="md">.MD</span><span className="inv">inverter</span></a>
+        </p>
+        <p>A Studio Burnside tool · everything stays in your browser</p>
+        <p><a href="mailto:darnell@studioburnside.com">darnell@studioburnside.com</a></p>
       </footer>
     </>
   );

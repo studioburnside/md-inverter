@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { mdToRtf, mdToPlaintext, downloadRtf, downloadText, copyToClipboard, copyRtfToClipboard } from "@/lib/markdown-to-rtf";
 
 const SAMPLE_MARKDOWN = `# Heading 1
@@ -188,219 +188,137 @@ export default function Converter() {
   }, [isPremium, freeProExhausted, handleBulkConvert]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--bs-bg)] text-[var(--bs-creme)]">
-      {/* Header */}
-      <header className="border-b border-[var(--bs-burgundy)] bg-[var(--bs-surface)]">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[var(--bs-gold)] rounded-lg flex items-center justify-center text-[var(--bs-bg)] font-bold text-sm">M</div>
-            <h1 className="text-xl font-semibold text-[var(--bs-gold-champagne)]">.MDinverter</h1>
-            <span className="text-sm text-[var(--bs-bronze)]">v2.0 online</span>
+    <div className="conv-shell">
+      {/* Toolbar */}
+      <div className="conv-toolbar">
+        <div className="left">
+          <div className="seg" role="group" aria-label="Output format">
+            <button aria-pressed={outputFormat === "rtf"} onClick={() => setOutputFormat("rtf")}>.rtf</button>
+            <button aria-pressed={outputFormat === "text"} onClick={() => setOutputFormat("text")}>.txt</button>
+            <button aria-pressed={outputFormat === "both"} onClick={() => setOutputFormat("both")}>both</button>
           </div>
-          <div className="flex items-center gap-2">
-            {isPremium && (
-              <span className="text-xs px-2 py-1 bg-[var(--bs-emerald-deep)] text-[var(--bs-creme)] rounded">
-                ● PREMIUM
-              </span>
-            )}
-            {!isPremium && (
-              <span className="text-xs px-2 py-1 bg-[var(--bs-royal)] text-white rounded">
-                Free: {dailyRemaining}/1 today · {monthlyRemaining}/20 this month
-              </span>
-            )}
+          {isPremium ? (
+            <span className="chip chip-premium">● premium — unlimited</span>
+          ) : (
+            <span className="chip chip-free">free · {dailyRemaining}/{DAILY_LIMIT} today · {monthlyRemaining}/{MONTHLY_LIMIT} this month</span>
+          )}
+        </div>
+        <div className="right">
+          {isPremium && (
+            <>
+              <input
+                type="text"
+                value={fileName}
+                onChange={(e) => setFileName(e.target.value)}
+                className="mdi-input"
+                placeholder="filename"
+                aria-label="Output filename"
+              />
+              <label className="mdi-check">
+                <input
+                  type="checkbox"
+                  checked={bulkMode}
+                  onChange={(e) => setBulkMode(e.target.checked)}
+                />
+                bulk
+              </label>
+            </>
+          )}
+          {outputFormat !== "both" && (
             <button
-              onClick={() => setIsPremium(!isPremium)}
-              className="text-xs px-3 py-1 bg-[var(--bs-royal)] text-white rounded hover:bg-[var(--bs-royal-deep)] transition-colors"
+              onClick={outputFormat === "rtf" ? handleCopyRtf : handleCopyText}
+              className="btn btn-ghost btn-sm"
+              title={outputFormat === "rtf" && !isPremium ? "RTF copy is a pro feature — uses 1 free conversion" : ""}
             >
-              {isPremium ? "Free Tier" : "Go Premium — $9"}
+              Copy
+            </button>
+          )}
+          <button
+            onClick={bulkMode && isPremium ? handleBulkConvertClick : handleDownload}
+            className="btn btn-blue btn-sm"
+          >
+            Download{outputFormat === "both" ? " all" : ""}
+          </button>
+        </div>
+      </div>
+
+      {/* Two worlds */}
+      <div className="conv-grid">
+        {/* Ink: markdown in */}
+        <div className="conv-col ink">
+          <div className="bar">
+            <span>markdown in</span>
+            <button onClick={() => setMarkdown(SAMPLE_MARKDOWN)} className="btn btn-ghost btn-sm" style={{ textTransform: "none", letterSpacing: 0 }}>
+              Load example
             </button>
           </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
-        {/* Format selector */}
-        <div className="flex gap-4 mb-6">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="format"
-              checked={outputFormat === "rtf"}
-              onChange={() => setOutputFormat("rtf")}
-              className="accent-[var(--bs-gold)]"
-            />
-            <span>RTF (.rtf)</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="format"
-              checked={outputFormat === "text"}
-              onChange={() => setOutputFormat("text")}
-              className="accent-[var(--bs-gold)]"
-            />
-            <span>Plaintext (.txt)</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="format"
-              checked={outputFormat === "both"}
-              onChange={() => setOutputFormat("both")}
-              className="accent-[var(--bs-gold)]"
-            />
-            <span>Both</span>
-          </label>
-        </div>
-
-        {/* Two-panel layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Input panel */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm text-[var(--bs-bronze)]">Markdown Input</label>
-              <button
-                onClick={() => setMarkdown(SAMPLE_MARKDOWN)}
-                className="text-xs px-2 py-1 bg-[var(--bs-walnut)] text-[var(--bs-creme)] rounded hover:bg-[var(--bs-burgundy)] transition-colors"
-              >
-                Load Example
-              </button>
-            </div>
-            <textarea
-              value={markdown}
-              onChange={(e) => setMarkdown(e.target.value)}
-              className="w-full h-[500px] p-4 bg-[var(--bs-surface)] border border-[var(--bs-burgundy)] rounded-lg font-mono text-sm resize-none focus:outline-none focus:border-[var(--bs-gold)]"
-              placeholder="Paste your Markdown here..."
-              spellCheck={false}
-            />
-            {!isPremium && (
-              <div className="mt-2 text-xs text-[var(--bs-bronze)]">
-                Free tier: {dailyRemaining} of {DAILY_LIMIT} pro conversion{s(dailyRemaining)} today · {monthlyRemaining} of {MONTHLY_LIMIT} this month
-                <span className="text-[var(--bs-gold)]"> · Plaintext is always free</span>
-              </div>
-            )}
-          </div>
-
-          {/* Output panel */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm text-[var(--bs-bronze)]">
-                {outputFormat === "rtf" ? "RTF Output" : outputFormat === "text" ? "Plaintext Output" : "Both Outputs"}
-              </label>
-              <div className="flex gap-2">
-                {/* File name (premium only) */}
-                {isPremium && (
-                  <input
-                    type="text"
-                    value={fileName}
-                    onChange={(e) => setFileName(e.target.value)}
-                    className="text-xs px-2 py-1 bg-[var(--bs-bg)] border border-[var(--bs-burgundy)] rounded text-[var(--bs-creme)] focus:outline-none focus:border-[var(--bs-gold)]"
-                    placeholder="filename"
-                  />
-                )}
-                {/* Copy button — RTF copy is pro, plaintext copy is free */}
-                {outputFormat !== "both" && (
-                  <button
-                    onClick={outputFormat === "rtf" ? handleCopyRtf : handleCopyText}
-                    className={`text-xs px-3 py-1 rounded transition-colors
-                      ${outputFormat === "rtf" && !isPremium
-                        ? "bg-[var(--bs-walnut)] text-[var(--bs-creme)] hover:bg-[var(--bs-burgundy)]"
-                        : "bg-[var(--bs-walnut)] text-[var(--bs-creme)] hover:bg-[var(--bs-burgundy)]"
-                      }`}
-                    title={outputFormat === "rtf" && !isPremium ? "RTF copy is a pro feature — uses 1 free conversion" : ""}
-                  >
-                    Copy
-                  </button>
-                )}
-                {/* Bulk mode toggle (premium only) */}
-                {isPremium && (
-                  <label className="text-xs flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      checked={bulkMode}
-                      onChange={(e) => setBulkMode(e.target.checked)}
-                      className="accent-[var(--bs-gold)]"
-                    />
-                    Bulk
-                  </label>
-                )}
-                {/* Download button */}
-                <button
-                  onClick={bulkMode && isPremium ? handleBulkConvertClick : handleDownload}
-                  className="text-xs px-3 py-1 bg-[var(--bs-gold)] text-[var(--bs-bg)] font-medium rounded hover:bg-[var(--bs-gold-champagne)] transition-colors"
-                >
-                  Download {outputFormat === "both" ? "All" : ""}
-                </button>
-              </div>
-            </div>
-
-            {outputFormat === "rtf" && (
-              <pre className="w-full h-[500px] p-4 bg-[var(--bs-surface)] border border-[var(--bs-burgundy)] rounded-lg font-mono text-xs overflow-auto resize-none text-[var(--bs-creme)]">
-                {rtfContent}
-              </pre>
-            )}
-
-            {outputFormat === "text" && (
-              <pre className="w-full h-[500px] p-4 bg-[var(--bs-surface)] border border-[var(--bs-burgundy)] rounded-lg font-mono text-sm overflow-auto resize-none text-[var(--bs-creme)]">
-                {textContent}
-              </pre>
-            )}
-
-            {outputFormat === "both" && (
-              <div className="space-y-4 h-[500px]">
-                <div className="h-1/2">
-                  <div className="text-xs text-[var(--bs-bronze)] mb-1">RTF:</div>
-                  <pre className="w-full h-[240px] p-3 bg-[var(--bs-bg)] border border-[var(--bs-burgundy)] rounded-lg font-mono text-xs overflow-auto text-[var(--bs-creme)]">
-                    {rtfContent.substring(0, 500)}
-                    {rtfContent.length > 500 && "\n... (truncated)"}
-                  </pre>
-                </div>
-                <div className="h-1/2">
-                  <div className="text-xs text-[var(--bs-bronze)] mb-1">Plaintext:</div>
-                  <pre className="w-full h-[240px] p-3 bg-[var(--bs-bg)] border border-[var(--bs-burgundy)] rounded-lg font-mono text-sm overflow-auto text-[var(--bs-creme)]">
-                    {textContent}
-                  </pre>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-
-      {/* Footer with premium upsell */}
-      <footer className="border-t border-[var(--bs-burgundy)] bg-[var(--bs-surface)] mt-8">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          {!isPremium ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-[var(--bs-gold-champagne)] font-semibold mb-1">Unlock Premium — $9 one-time</h3>
-                <p className="text-sm text-[var(--bs-bronze)]">
-                  Unlimited pro conversions, bulk mode, custom filenames, RTF clipboard copy.
-                  You get {DAILY_LIMIT} free pro conversion{s(DAILY_LIMIT)} per day ({MONTHLY_LIMIT} per month) —
-                  or upgrade for unlimited.
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  window.location.href = "https://buy.stripe.com/test_4gobV9bRzduFb0I3UU";
-                }}
-                className="px-6 py-2 bg-[var(--bs-emerald)] text-[var(--bs-bg)] font-medium rounded-lg hover:bg-[var(--bs-emerald-deep)] transition-colors"
-              >
-                Go Premium
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-[var(--bs-emerald)]">●</span>
-                <span className="text-[var(--bs-creme)] font-medium">Premium active — thank you!</span>
-              </div>
-              <span className="text-sm text-[var(--bs-bronze)]">Lifetime license • All features unlocked</span>
+          <textarea
+            value={markdown}
+            onChange={(e) => setMarkdown(e.target.value)}
+            className="conv-input"
+            placeholder="Paste your Markdown here…"
+            spellCheck={false}
+            aria-label="Markdown input"
+          />
+          {!isPremium && (
+            <div className="conv-quota">
+              free tier: {dailyRemaining} of {DAILY_LIMIT} pro conversion{s(dailyRemaining)} today · {monthlyRemaining} of {MONTHLY_LIMIT} this month
+              <b> · plaintext is always free</b>
             </div>
           )}
         </div>
-      </footer>
+
+        {/* Paper: rich text out */}
+        <div className="conv-col paper">
+          <div className="bar">
+            <span>
+              {outputFormat === "rtf" ? "rich text out (.rtf)" : outputFormat === "text" ? "plaintext out (.txt)" : "both outputs"}
+            </span>
+          </div>
+
+          {outputFormat === "rtf" && (
+            <pre className="conv-output" aria-label="RTF output">{rtfContent}</pre>
+          )}
+
+          {outputFormat === "text" && (
+            <pre className="conv-output" aria-label="Plaintext output">{textContent}</pre>
+          )}
+
+          {outputFormat === "both" && (
+            <div>
+              <pre className="conv-output half" aria-label="RTF output (truncated)">
+                {rtfContent.substring(0, 500)}
+                {rtfContent.length > 500 && "\n… (truncated — download for the full file)"}
+              </pre>
+              <pre className="conv-output half" aria-label="Plaintext output">{textContent}</pre>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Upsell strip */}
+      <div className="upsell">
+        {!isPremium ? (
+          <>
+            <p className="t">
+              <b>Premium — $9, once.</b> Unlimited RTF, bulk mode, custom filenames, rich-text clipboard.
+            </p>
+            <button
+              onClick={() => { window.location.href = "https://buy.stripe.com/test_4gobV9bRzduFb0I3UU"; }}
+              className="btn btn-quill btn-sm"
+            >
+              Go Premium
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="t"><b>Premium active — thank you.</b> Lifetime license, all features unlocked.</p>
+            <button onClick={() => setIsPremium(false)} className="btn btn-ghost btn-sm">
+              Preview free tier
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
