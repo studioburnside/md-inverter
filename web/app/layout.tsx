@@ -8,10 +8,12 @@ export const metadata = {
     icon: "/favicon.ico",
     apple: "/favicon.ico",
   },
+  metadataBase: new URL("https://mdinverter.com"),
+  alternates: { canonical: "https://mdinverter.com" },
   openGraph: {
     title: ".MDinverter — Markdown to RTF, Online",
     description: "Convert Markdown to RTF or plain text instantly in your browser.",
-    url: "https://md-inverter.com",
+    url: "https://mdinverter.com",
     type: "website",
   },
 };
